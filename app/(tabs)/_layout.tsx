@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react-native';
+import { BookOpen, MessagesSquare, Settings, Sparkles } from 'lucide-react-native';
 import { Tabs } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useThemeColor } from 'heroui-native';
@@ -35,8 +35,29 @@ export default function TabLayout() {
         <Tabs.Screen
           name="index"
           options={{
-            title: 'Home',
-            tabBarIcon: ({ color, size }) => <Home color={color} size={size ?? 24} />,
+            title: 'Inbox',
+            tabBarIcon: ({ color, size }) => <MessagesSquare color={color} size={size ?? 24} />,
+          }}
+        />
+        <Tabs.Screen
+          name="knowledge"
+          options={{
+            title: 'Knowledge',
+            tabBarIcon: ({ color, size }) => <BookOpen color={color} size={size ?? 24} />,
+          }}
+        />
+        <Tabs.Screen
+          name="playground"
+          options={{
+            title: 'Try it',
+            tabBarIcon: ({ color, size }) => <Sparkles color={color} size={size ?? 24} />,
+          }}
+        />
+        <Tabs.Screen
+          name="settings"
+          options={{
+            title: 'Settings',
+            tabBarIcon: ({ color, size }) => <Settings color={color} size={size ?? 24} />,
           }}
         />
       </Tabs>

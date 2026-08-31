@@ -13,8 +13,9 @@ import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { Platform } from 'react-native';
 import { useEffect } from 'react';
 import * as DevClient from 'expo-dev-client';
-import { HeroUINativeProvider } from 'heroui-native';
+import { HeroUINativeProvider, useThemeColor } from 'heroui-native';
 import { Uniwind } from 'uniwind';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
   ErrorBoundary as ExpoErrorBoundary,
   type ErrorBoundaryProps,
@@ -25,6 +26,7 @@ import {
 import { initPostHog } from '@/lib/posthog';
 import { registerServiceWorker } from '@/lib/registerServiceWorker';
 import { reportErrorToParent } from '@/lib/reportPreviewError';
+import { AuthProvider } from '@/lib/auth';
 import { InstallPrompt } from '@/components/InstallPrompt';
 
 /**
@@ -47,6 +49,35 @@ export { ErrorBoundary };
 Uniwind.setTheme('light');
 
 void SplashScreen.preventAutoHideAsync();
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: { retry: 1, staleTime: 30_000, refetchOnWindowFocus: false },
+  },
+});
+
+/** Themed navigator. Lives inside the providers so theme colors resolve. */
+function RootNavigator() {
+  const [background, foreground] = useThemeColor(['background', 'foreground']);
+
+  return (
+    <Stack
+      screenOptions={{
+        headerStyle: { backgroundColor: background },
+        headerTintColor: foreground,
+        headerTitleStyle: { color: foreground },
+        headerShadowVisible: false,
+        headerBackButtonDisplayMode: 'minimal',
+        contentStyle: { backgroundColor: background },
+      }}
+    >
+      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="sign-in" options={{ headerShown: false }} />
+      <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+    </Stack>
+  );
+}
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
@@ -140,12 +171,14 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <HeroUINativeProvider>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ title: 'Habits', headerShown: false }} />
-        </Stack>
-        <InstallPrompt />
-      </HeroUINativeProvider>
+      <QueryClientProvider client={queryClient}>
+        <HeroUINativeProvider>
+          <AuthProvider>
+            <RootNavigator />
+          </AuthProvider>
+          <InstallPrompt />
+        </HeroUINativeProvider>
+      </QueryClientProvider>
     </GestureHandlerRootView>
   );
 }

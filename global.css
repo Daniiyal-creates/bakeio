@@ -6,35 +6,127 @@
 @import 'heroui-native/styles';
 
 /*
- * HeroUI Native + Uniwind tokens
+ * Bakeio — warm bakery theme.
  *
- * HeroUI component variants compile to semantic utilities such as bg-accent,
- * text-accent-foreground, bg-default, and text-foreground. The imported
- * heroui-native/styles package defines the default semantic theme and maps it
- * to --color-* Tailwind utilities.
- *
- * When changing brand colors, override semantic tokens inside Uniwind theme
- * variants. Do not put --accent only in a plain :root block: web may look
- * correct through CSS cascade order while Expo Go/native keeps HeroUI's
- * default blue from the active light/dark theme table.
- *
- * Example:
- *
- * @layer theme {
- *   :root {
- *     @variant light {
- *       --accent: oklch(0.63 0.18 148);
- *       --accent-foreground: oklch(0.99 0 0);
- *       --focus: var(--accent);
- *     }
- *
- *     @variant dark {
- *       --accent: oklch(0.63 0.18 148);
- *       --accent-foreground: oklch(0.99 0 0);
- *       --focus: var(--accent);
- *     }
- *   }
- * }
+ * Semantic tokens are overridden inside Uniwind theme variants so HeroUI
+ * components pick the bakery palette up on native as well as web. The app is
+ * light-only (see Uniwind.setTheme('light') in app/_layout.tsx) but both
+ * variants are defined so no default blue can leak through.
  */
+
+@layer theme {
+  :root {
+    @variant light {
+      /* Warm cream page, deep roasted-brown ink */
+      --background: oklch(0.973 0.014 84);
+      --foreground: oklch(0.27 0.032 52);
+
+      --surface: oklch(0.995 0.006 86);
+      --surface-foreground: var(--foreground);
+
+      --surface-secondary: oklch(0.955 0.019 82);
+      --surface-secondary-foreground: var(--foreground);
+
+      --surface-tertiary: oklch(0.925 0.026 80);
+      --surface-tertiary-foreground: var(--foreground);
+
+      --overlay: oklch(0.995 0.006 86);
+      --overlay-foreground: var(--foreground);
+      --backdrop: oklch(0.27 0.032 52 / 32%);
+
+      --muted: oklch(0.565 0.031 62);
+
+      --default: oklch(0.945 0.021 82);
+      --default-foreground: var(--foreground);
+
+      /* Toasted caramel */
+      --accent: oklch(0.635 0.142 52);
+      --accent-foreground: oklch(0.99 0.006 86);
+
+      --field-background: oklch(0.995 0.006 86);
+      --field-foreground: var(--foreground);
+      --field-placeholder: oklch(0.635 0.026 66);
+      --field-border: transparent;
+
+      --success: oklch(0.66 0.13 152);
+      --success-foreground: oklch(0.99 0.006 86);
+
+      --warning: oklch(0.79 0.145 78);
+      --warning-foreground: oklch(0.27 0.032 52);
+
+      --danger: oklch(0.578 0.198 24);
+      --danger-foreground: oklch(0.99 0.006 86);
+
+      --segment: oklch(0.995 0.006 86);
+      --segment-foreground: var(--foreground);
+
+      --border: oklch(0.902 0.024 80);
+      --separator: oklch(0.855 0.028 78);
+      --focus: var(--accent);
+      --link: var(--accent);
+    }
+
+    @variant dark {
+      --background: oklch(0.185 0.016 52);
+      --foreground: oklch(0.965 0.012 84);
+
+      --surface: oklch(0.243 0.021 54);
+      --surface-foreground: var(--foreground);
+
+      --surface-secondary: oklch(0.278 0.023 54);
+      --surface-secondary-foreground: var(--foreground);
+
+      --surface-tertiary: oklch(0.31 0.025 54);
+      --surface-tertiary-foreground: var(--foreground);
+
+      --overlay: oklch(0.243 0.021 54);
+      --overlay-foreground: var(--foreground);
+      --backdrop: oklch(0.12 0.012 52 / 45%);
+
+      --muted: oklch(0.715 0.028 70);
+
+      --default: oklch(0.295 0.023 54);
+      --default-foreground: var(--foreground);
+
+      --accent: oklch(0.705 0.138 58);
+      --accent-foreground: oklch(0.2 0.02 52);
+
+      --field-background: oklch(0.243 0.021 54);
+      --field-foreground: var(--foreground);
+      --field-placeholder: oklch(0.66 0.026 70);
+      --field-border: transparent;
+
+      --success: oklch(0.7 0.14 152);
+      --success-foreground: oklch(0.2 0.02 52);
+
+      --warning: oklch(0.82 0.14 78);
+      --warning-foreground: oklch(0.2 0.02 52);
+
+      --danger: oklch(0.64 0.19 24);
+      --danger-foreground: oklch(0.99 0.006 86);
+
+      --segment: oklch(0.35 0.025 54);
+      --segment-foreground: var(--foreground);
+
+      --border: oklch(0.315 0.022 54);
+      --separator: oklch(0.4 0.024 54);
+      --focus: var(--accent);
+      --link: var(--accent);
+    }
+  }
+}
+
+/*
+ * Extra --color-* utilities. Only entries declared here generate the matching
+ * bg, text and border classes, so any colour used directly in className
+ * must live in this block.
+ */
+@theme {
+  --color-crust: oklch(0.845 0.062 72);
+  --color-dough: oklch(0.938 0.032 84);
+  --color-berry: oklch(0.552 0.166 12);
+  --color-pistachio: oklch(0.68 0.108 142);
+  --radius: 0.75rem;
+}
 
 @source './node_modules/heroui-native/lib';
