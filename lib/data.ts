@@ -18,6 +18,7 @@ import type {
   Policy,
   Product,
   WhatsappConnection,
+  WhatsappDesiredState,
 } from '@/lib/types';
 
 /* -------------------------------------------------------------------------- */
@@ -361,6 +362,16 @@ export function useWhatsappConnection() {
       if (result.error) throw new Error(result.error.message);
       return result.data;
     },
+    // A QR pairing changes from the worker's side, so this screen polls: quickly
+    // while a code is on screen or a session is settling, slowly once it holds.
+    refetchInterval: (query) => {
+      const connection = query.state.data;
+      if (!connection || connection.mode !== 'qr') return false;
+      if (connection.desired_state !== 'connected') {
+        return connection.status === 'disconnected' ? false : 3000;
+      }
+      return connection.status === 'connected' ? 15000 : 2500;
+    },
   });
 }
 
@@ -385,7 +396,44 @@ export function useSaveWhatsappConnection() {
   });
 }
 
-export function useDisconnectWhatsapp() {
+/**
+ * Asks the session worker to open or close this bakery's WhatsApp session.
+ * The app only records the intent; the worker does the work and writes the
+ * resulting status back, which is why nothing here waits on WhatsApp.
+ */
+export function useSetWhatsappDesiredState() {
+  const queryClient = useQueryClient();
+  const bakeryId = useBakeryId();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      desired_state,
+    }: {
+      id: string;
+      desired_state: WhatsappDesiredState;
+    }): Promise<WhatsappConnection> => {
+      const result = await backend
+        .from('whatsapp_connections')
+        .update({
+          desired_state,
+          status: desired_state === 'connected' ? 'connecting' : 'disconnecting',
+          error_message: null,
+          qr_image: null,
+          qr_expires_at: null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', id)
+        .select<'*', WhatsappConnection>('*')
+        .single();
+      if (result.error) throw new Error(result.error.message);
+      return result.data;
+    },
+    onSuccess: (connection) => queryClient.setQueryData(keys.whatsapp(bakeryId), connection),
+  });
+}
+
+export function useRemoveWhatsappConnection() {
   const queryClient = useQueryClient();
   const bakeryId = useBakeryId();
 

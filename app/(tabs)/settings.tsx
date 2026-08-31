@@ -17,6 +17,7 @@ import { SectionCard } from '@/components/SectionCard';
 import { SwitchRow } from '@/components/SwitchRow';
 import { formatPhone } from '@/lib/format';
 import { friendlyError } from '@/lib/backend';
+import { isWorkerOnline } from '@/lib/types';
 import { signOut, useAuth } from '@/lib/auth';
 import {
   useAgentSettings,
@@ -36,7 +37,11 @@ export default function SettingsScreen() {
 
   const [signOutOpen, setSignOutOpen] = useState(false);
 
-  const connected = connection.data?.status === 'connected';
+  const whatsapp = connection.data;
+  // A QR session only counts as connected while its worker is actually alive.
+  const connected =
+    whatsapp?.status === 'connected' && (whatsapp.mode !== 'qr' || isWorkerOnline(whatsapp));
+  const awaitingScan = whatsapp?.mode === 'qr' && whatsapp.status === 'qr_pending';
   const agentOn = settings.data?.enabled ?? false;
 
   return (
@@ -69,9 +74,11 @@ export default function SettingsScreen() {
           icon={<MessageCircle size={20} color={foreground} />}
           title="WhatsApp number"
           subtitle={
-            connection.data
-              ? formatPhone(connection.data.phone_number)
-              : 'Not connected — customers cannot reach the assistant yet'
+            awaitingScan
+              ? 'Scan the QR code to finish connecting'
+              : whatsapp
+                ? formatPhone(whatsapp.linked_as ?? whatsapp.phone_number)
+                : 'Not connected — customers cannot reach the assistant yet'
           }
           onPress={() => router.push('/settings/whatsapp')}
           trailing={

@@ -72,6 +72,17 @@ config.server = {
   },
 };
 
+// The WhatsApp session worker in server/ is a separate Node service with its
+// own dependencies. Nothing in the app imports it, so keep it out of Metro.
+config.resolver.blockList = [
+  ...(Array.isArray(config.resolver.blockList)
+    ? config.resolver.blockList
+    : config.resolver.blockList
+      ? [config.resolver.blockList]
+      : []),
+  /server[/\\](node_modules|src)[/\\].*/,
+];
+
 const defaultResolveRequest = config.resolver.resolveRequest;
 
 const shouldResolveEmpty = (moduleName, platform) =>

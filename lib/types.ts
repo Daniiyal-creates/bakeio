@@ -138,7 +138,26 @@ export type AgentSettings = {
   updated_at: string;
 };
 
-export type WhatsappStatus = 'pending' | 'connected' | 'error' | 'disconnected';
+/**
+ * How a bakery's WhatsApp is wired up.
+ *  test — nothing leaves Bakeio, the owner tries the assistant in-app
+ *  qr   — a linked device, paired by scanning a QR code (session worker)
+ *  live — the official WhatsApp Business API (webhook)
+ */
+export const WHATSAPP_MODES = ['test', 'qr', 'live'] as const;
+export type WhatsappMode = (typeof WHATSAPP_MODES)[number];
+
+export type WhatsappStatus =
+  | 'pending'
+  | 'connecting'
+  | 'qr_pending'
+  | 'connected'
+  | 'disconnecting'
+  | 'disconnected'
+  | 'error';
+
+/** What the owner asked for. The session worker reconciles towards it. */
+export type WhatsappDesiredState = 'connected' | 'disconnected';
 
 export type WhatsappConnection = {
   id: string;
@@ -153,9 +172,25 @@ export type WhatsappConnection = {
   provider_phone_number_id: string | null;
   provider_token: string | null;
   webhook_verify_token: string | null;
+  desired_state: string;
+  /** Data URL of the pairing code, written by the session worker. */
+  qr_image: string | null;
+  qr_expires_at: string | null;
+  /** Last time the session worker reported in. Null means it is not running. */
+  worker_seen_at: string | null;
+  /** The number WhatsApp actually paired, once linked. */
+  linked_as: string | null;
   created_at: string;
   updated_at: string;
 };
+
+/** A QR session is only considered live if the worker checked in recently. */
+export const WORKER_STALE_AFTER_MS = 45_000;
+
+export function isWorkerOnline(connection: WhatsappConnection | null | undefined): boolean {
+  if (!connection?.worker_seen_at) return false;
+  return Date.now() - new Date(connection.worker_seen_at).getTime() < WORKER_STALE_AFTER_MS;
+}
 
 export type ConversationStatus = 'active' | 'needs_human' | 'closed';
 
