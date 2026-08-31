@@ -19,7 +19,7 @@ export const backend = createClient(url, anonKey, {
   },
 });
 
-/** Public URL WhatsApp posts inbound messages to. */
+/** Public URL Twilio posts inbound WhatsApp messages to. */
 export const WEBHOOK_URL = `${url}/functions/v1/whatsapp-webhook`;
 
 /** Turns backend/network errors into something a bakery owner can act on. */
@@ -45,6 +45,9 @@ export function friendlyError(error: unknown): string {
   }
   if (lower.includes('rate limit') || lower.includes('too many')) {
     return 'Too many attempts. Please wait a moment and try again.';
+  }
+  if (lower.includes('twilio_account_sid')) {
+    return 'That Twilio account is already connected to another bakery. Each bakery needs its own Twilio account.';
   }
   if (lower.includes('duplicate key') || lower.includes('already exists')) {
     return 'That already exists.';

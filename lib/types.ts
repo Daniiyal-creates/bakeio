@@ -140,24 +140,13 @@ export type AgentSettings = {
 
 /**
  * How a bakery's WhatsApp is wired up.
- *  test — nothing leaves Bakeio, the owner tries the assistant in-app
- *  qr   — a linked device, paired by scanning a QR code (session worker)
- *  live — the official WhatsApp Business API (webhook)
+ *  test   — nothing leaves Bakeio, the owner tries the assistant in-app
+ *  twilio — real customer messages arrive through the bakery's own Twilio account
  */
-export const WHATSAPP_MODES = ['test', 'qr', 'live'] as const;
+export const WHATSAPP_MODES = ['test', 'twilio'] as const;
 export type WhatsappMode = (typeof WHATSAPP_MODES)[number];
 
-export type WhatsappStatus =
-  | 'pending'
-  | 'connecting'
-  | 'qr_pending'
-  | 'connected'
-  | 'disconnecting'
-  | 'disconnected'
-  | 'error';
-
-/** What the owner asked for. The session worker reconciles towards it. */
-export type WhatsappDesiredState = 'connected' | 'disconnected';
+export type WhatsappStatus = 'pending' | 'connected' | 'error';
 
 export type WhatsappConnection = {
   id: string;
@@ -165,32 +154,32 @@ export type WhatsappConnection = {
   phone_number: string;
   display_name: string | null;
   status: string;
-  verification_code: string | null;
   error_message: string | null;
   connected_at: string | null;
   mode: string;
-  provider_phone_number_id: string | null;
-  provider_token: string | null;
-  webhook_verify_token: string | null;
-  desired_state: string;
-  /** Data URL of the pairing code, written by the session worker. */
-  qr_image: string | null;
-  qr_expires_at: string | null;
-  /** Last time the session worker reported in. Null means it is not running. */
-  worker_seen_at: string | null;
-  /** The number WhatsApp actually paired, once linked. */
-  linked_as: string | null;
+  /** The bakery's own Twilio account. Inbound messages are routed by this. */
+  twilio_account_sid: string | null;
+  twilio_auth_token: string | null;
+  /** E.164 WhatsApp sender replies go out from: Twilio's sandbox or the bakery's own. */
+  twilio_from_number: string | null;
   created_at: string;
   updated_at: string;
 };
 
-/** A QR session is only considered live if the worker checked in recently. */
-export const WORKER_STALE_AFTER_MS = 45_000;
+/** Twilio's shared WhatsApp sandbox sender — free, and usable straight away. */
+export const TWILIO_SANDBOX_NUMBER = '+14155238886';
 
-export function isWorkerOnline(connection: WhatsappConnection | null | undefined): boolean {
-  if (!connection?.worker_seen_at) return false;
-  return Date.now() - new Date(connection.worker_seen_at).getTime() < WORKER_STALE_AFTER_MS;
+/** A Twilio Account SID is always "AC" followed by 32 hex characters. */
+export function looksLikeAccountSid(value: string): boolean {
+  return /^AC[0-9a-fA-F]{32}$/.test(value.trim());
 }
+
+/** What twilio-check answers when credentials are tried against Twilio. */
+export type TwilioCheckResult = {
+  ok: boolean;
+  account_name?: string | null;
+  message?: string;
+};
 
 export type ConversationStatus = 'active' | 'needs_human' | 'closed';
 
