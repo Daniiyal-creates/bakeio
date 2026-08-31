@@ -17,6 +17,7 @@ import {
   useSaveWhatsappConnection,
   useWhatsappConnection,
 } from '@/lib/data';
+import { toOption } from '@/lib/types';
 
 const MODES = ['test', 'live'] as const;
 type Mode = (typeof MODES)[number];
@@ -37,7 +38,7 @@ export default function WhatsappScreen() {
 
   const [phone, setPhone] = useState(existing?.phone_number ?? '');
   const [displayName, setDisplayName] = useState(existing?.display_name ?? '');
-  const [mode, setMode] = useState<Mode>((existing?.mode as Mode) ?? 'test');
+  const [mode, setMode] = useState<Mode>(toOption(MODES, existing?.mode, 'test'));
   const [phoneNumberId, setPhoneNumberId] = useState(existing?.provider_phone_number_id ?? '');
   const [token, setToken] = useState(existing?.provider_token ?? '');
   const [touched, setTouched] = useState(false);
@@ -106,7 +107,7 @@ export default function WhatsappScreen() {
                 </Typography>
               </View>
               <Chip size="sm" variant="secondary" color="default">
-                <Chip.Label>{MODE_LABELS[existing.mode as Mode] ?? existing.mode}</Chip.Label>
+                <Chip.Label>{MODE_LABELS[toOption(MODES, existing.mode, 'test')]}</Chip.Label>
               </Chip>
             </View>
           </SectionCard>

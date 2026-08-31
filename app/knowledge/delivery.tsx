@@ -10,13 +10,13 @@ import { formatMoney } from '@/lib/format';
 import { useBakery, useDeliveryZones } from '@/lib/data';
 import type { DeliveryZone } from '@/lib/types';
 
+const openEditor = (id: string) =>
+  router.push({ pathname: '/knowledge/zone/[id]', params: { id } });
+
 export default function DeliveryScreen() {
   const [muted, foreground] = useThemeColor(['muted', 'foreground']);
   const { data: bakery } = useBakery();
   const zones = useDeliveryZones();
-
-  const openEditor = (id: string) =>
-    router.push({ pathname: '/knowledge/zone/[id]', params: { id } });
 
   return (
     <CollectionList<DeliveryZone>

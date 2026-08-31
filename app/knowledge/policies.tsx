@@ -8,12 +8,12 @@ import { ListRow } from '@/components/ListRow';
 import { usePolicies } from '@/lib/data';
 import type { Policy } from '@/lib/types';
 
+const openEditor = (id: string) =>
+  router.push({ pathname: '/knowledge/policy/[id]', params: { id } });
+
 export default function PoliciesScreen() {
   const [muted, foreground] = useThemeColor(['muted', 'foreground']);
   const policies = usePolicies();
-
-  const openEditor = (id: string) =>
-    router.push({ pathname: '/knowledge/policy/[id]', params: { id } });
 
   return (
     <CollectionList<Policy>

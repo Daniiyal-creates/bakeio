@@ -10,13 +10,13 @@ import { formatMoney } from '@/lib/format';
 import { useBakery, useProducts } from '@/lib/data';
 import type { Product } from '@/lib/types';
 
+const openEditor = (id: string) =>
+  router.push({ pathname: '/knowledge/product/[id]', params: { id } });
+
 export default function ProductsScreen() {
   const [muted, foreground] = useThemeColor(['muted', 'foreground']);
   const { data: bakery } = useBakery();
   const products = useProducts();
-
-  const openEditor = (id: string) =>
-    router.push({ pathname: '/knowledge/product/[id]', params: { id } });
 
   return (
     <CollectionList<Product>

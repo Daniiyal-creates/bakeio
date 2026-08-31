@@ -8,12 +8,11 @@ import { ListRow } from '@/components/ListRow';
 import { useFaqs } from '@/lib/data';
 import type { Faq } from '@/lib/types';
 
+const openEditor = (id: string) => router.push({ pathname: '/knowledge/faq/[id]', params: { id } });
+
 export default function FaqsScreen() {
   const [muted, foreground] = useThemeColor(['muted', 'foreground']);
   const faqs = useFaqs();
-
-  const openEditor = (id: string) =>
-    router.push({ pathname: '/knowledge/faq/[id]', params: { id } });
 
   return (
     <CollectionList<Faq>

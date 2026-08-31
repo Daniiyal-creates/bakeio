@@ -12,12 +12,7 @@ import { centsToInput, inputToCents } from '@/lib/format';
 import { friendlyError } from '@/lib/backend';
 import { goBackOrReplace } from '@/lib/navigation';
 import { useBakery, useDeleteProduct, useProducts, useSaveProduct } from '@/lib/data';
-import {
-  COMMON_ALLERGENS,
-  PRODUCT_CATEGORIES,
-  type ProductCategory,
-  toOption,
-} from '@/lib/types';
+import { COMMON_ALLERGENS, PRODUCT_CATEGORIES, type ProductCategory, toOption } from '@/lib/types';
 
 export default function ProductEditor() {
   const { id } = useLocalSearchParams<{ id: string }>();

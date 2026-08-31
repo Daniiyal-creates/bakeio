@@ -59,7 +59,7 @@ export function ChatThread({
     : messages;
 
   useEffect(() => {
-    if (rows.length === 0) return;
+    if (rows.length === 0) return undefined;
     const timer = setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 60);
     return () => clearTimeout(timer);
   }, [rows.length, awaitingReply]);
@@ -89,7 +89,7 @@ export function ChatThread({
               <Spinner />
             </View>
           ) : (
-            (empty ?? null)
+            <>{empty}</>
           )
         }
         ListFooterComponent={awaitingReply ? <TypingBubble /> : null}
