@@ -16,34 +16,14 @@ import * as DevClient from 'expo-dev-client';
 import { HeroUINativeProvider, useThemeColor } from 'heroui-native';
 import { Uniwind } from 'uniwind';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import {
-  ErrorBoundary as ExpoErrorBoundary,
-  type ErrorBoundaryProps,
-  SplashScreen,
-  Stack,
-} from 'expo-router';
+import { SplashScreen, Stack } from 'expo-router';
 
 import { initPostHog } from '@/lib/posthog';
 import { registerServiceWorker } from '@/lib/registerServiceWorker';
 import { reportErrorToParent } from '@/lib/reportPreviewError';
 import { AuthProvider } from '@/lib/auth';
+import { AppErrorBoundary } from '@/components/AppErrorBoundary';
 import { InstallPrompt } from '@/components/InstallPrompt';
-
-/**
- * Custom ErrorBoundary that reports React render errors to the parent window (Bilt preview iframe)
- * and then renders the default Expo error UI.
- */
-function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
-  useEffect(() => {
-    if (Platform.OS === 'web' && error) {
-      const message = [error.message, error.stack].filter(Boolean).join('\n');
-      reportErrorToParent(message);
-    }
-  }, [error]);
-  return <ExpoErrorBoundary error={error} retry={retry} />;
-}
-
-export { ErrorBoundary };
 
 // Starter is light-only by default. Remove this when implementing requested dark mode.
 Uniwind.setTheme('light');
@@ -174,7 +154,9 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <HeroUINativeProvider>
           <AuthProvider>
-            <RootNavigator />
+            <AppErrorBoundary>
+              <RootNavigator />
+            </AppErrorBoundary>
           </AuthProvider>
           <InstallPrompt />
         </HeroUINativeProvider>

@@ -6,10 +6,11 @@ import {
   CheckCircle2,
   LogOut,
   MessageCircle,
+  ShieldCheck,
   Store,
   TriangleAlert,
 } from 'lucide-react-native';
-import { Button, Chip, Separator, Typography, useThemeColor } from 'heroui-native';
+import { Button, Chip, Separator, Spinner, Typography, useThemeColor } from 'heroui-native';
 
 import { ConfirmDialog, ErrorNote } from '@/components/ConfirmDialog';
 import { ListRow } from '@/components/ListRow';
@@ -21,6 +22,7 @@ import { signOut, useAuth } from '@/lib/auth';
 import {
   useAgentSettings,
   useBakery,
+  useDeleteAccount,
   useUpdateAgentSettings,
   useWhatsappConnection,
 } from '@/lib/data';
@@ -33,8 +35,10 @@ export default function SettingsScreen() {
   const settings = useAgentSettings();
   const connection = useWhatsappConnection();
   const updateSettings = useUpdateAgentSettings();
+  const deleteAccount = useDeleteAccount();
 
   const [signOutOpen, setSignOutOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const whatsapp = connection.data;
   const connected = whatsapp?.status === 'connected';
@@ -48,6 +52,7 @@ export default function SettingsScreen() {
       keyboardShouldPersistTaps="handled"
     >
       {updateSettings.isError ? <ErrorNote message={friendlyError(updateSettings.error)} /> : null}
+      {deleteAccount.isError ? <ErrorNote message={friendlyError(deleteAccount.error)} /> : null}
 
       <SectionCard
         title="Automatic replies"
@@ -100,6 +105,13 @@ export default function SettingsScreen() {
           subtitle={bakery.data?.name ?? 'Name, address, hours and currency'}
           onPress={() => router.push('/knowledge/bakery')}
         />
+        <Separator className="ml-[68px]" />
+        <ListRow
+          icon={<ShieldCheck size={20} color={foreground} />}
+          title="Privacy policy"
+          subtitle="What Bakeio keeps, and what happens to customer messages"
+          onPress={() => router.push('/privacy')}
+        />
       </SectionCard>
 
       <SectionCard title="Account" subtitle={user?.email ?? undefined}>
@@ -118,6 +130,30 @@ export default function SettingsScreen() {
             </View>
           </Button.Label>
         </Button>
+
+        <Separator />
+
+        <View className="gap-2">
+          <Typography type="body-sm" weight="semibold">
+            Delete my account
+          </Typography>
+          <Typography type="body-xs" color="muted">
+            Removes your account, your bakery information and every conversation. This cannot be
+            undone.
+          </Typography>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="self-start"
+            isDisabled={deleteAccount.isPending}
+            onPress={() => setDeleteOpen(true)}
+          >
+            {deleteAccount.isPending ? <Spinner size="sm" color="danger" /> : null}
+            <Button.Label className="text-danger">
+              {deleteAccount.isPending ? 'Deleting…' : 'Delete my account'}
+            </Button.Label>
+          </Button>
+        </View>
       </SectionCard>
 
       <Typography type="body-xs" color="muted" align="center">
@@ -134,6 +170,24 @@ export default function SettingsScreen() {
           setSignOutOpen(false);
           void signOut();
         }}
+      />
+
+      <ConfirmDialog
+        isOpen={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Delete your account?"
+        description="Your bakery details, products, prices, policies, FAQs, delivery zones, WhatsApp connection and every conversation are erased straight away. This cannot be undone."
+        confirmLabel="Delete everything"
+        isPending={deleteAccount.isPending}
+        onConfirm={() =>
+          deleteAccount.mutate(undefined, {
+            onSuccess: () => {
+              setDeleteOpen(false);
+              router.replace('/sign-in');
+            },
+            onError: () => setDeleteOpen(false),
+          })
+        }
       />
     </ScrollView>
   );

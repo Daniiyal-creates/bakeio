@@ -634,6 +634,36 @@ export function useSendOwnerMessage() {
 }
 
 /* -------------------------------------------------------------------------- */
+/* Account                                                                    */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Deletes the owner's account and everything attached to it. Both app stores
+ * require this to be reachable from inside the app.
+ */
+export function useDeleteAccount() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (): Promise<void> => {
+      const { data, error } = await backend.functions.invoke<{ ok: boolean; message?: string }>(
+        'delete-account',
+        { body: {} },
+      );
+      if (error) throw new Error(error.message);
+      if (!data?.ok) {
+        throw new Error(data?.message ?? 'Your account could not be deleted. Please try again.');
+      }
+
+      // The account is gone, so only the session stored on this device can be
+      // cleared — a server sign-out would be rejected.
+      await backend.auth.signOut({ scope: 'local' });
+      queryClient.clear();
+    },
+  });
+}
+
+/* -------------------------------------------------------------------------- */
 /* Knowledge readiness                                                        */
 /* -------------------------------------------------------------------------- */
 

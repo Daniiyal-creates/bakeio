@@ -1,29 +1,23 @@
 {
-  "name": "Your App Name",
-  "short_name": "Your App",
-  "description": "An app built with Bilt",
+  "name": "Bakeio",
+  "short_name": "Bakeio",
+  "description": "Let an assistant answer your bakery's WhatsApp, using only the products, prices and policies you give it.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "theme_color": "#6366f1",
-  "background_color": "#ffffff",
+  "theme_color": "#FCF3E8",
+  "background_color": "#FCF3E8",
   "icons": [
     {
-      "src": "/icons/icon-192.png",
-      "sizes": "192x192",
+      "src": "/icons/icon-1024.png",
+      "sizes": "1024x1024",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icons/icon-512-maskable.png",
-      "sizes": "512x512",
+      "src": "/icons/icon-adaptive.png",
+      "sizes": "1024x1024",
       "type": "image/png",
       "purpose": "maskable"
     }

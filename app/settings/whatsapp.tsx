@@ -320,7 +320,13 @@ function WhatsappForm({ existing }: { existing: WhatsappConnection | null }) {
         description="Bakeio forgets the number and your Twilio details, and stops answering. Your bakery information and past chats stay."
         confirmLabel="Remove"
         isPending={remove.isPending}
-        onConfirm={() => remove.mutate(existing!.id, { onSuccess: () => setRemoveOpen(false) })}
+        onConfirm={() => {
+          if (!existing) {
+            setRemoveOpen(false);
+            return;
+          }
+          remove.mutate(existing.id, { onSuccess: () => setRemoveOpen(false) });
+        }}
       />
     </ScrollView>
   );

@@ -106,6 +106,10 @@ export default function SignIn() {
             <Button size="lg" isDisabled={busy} onPress={() => void requestCode()}>
               <Button.Label>{busy ? 'Sending…' : 'Send my code'}</Button.Label>
             </Button>
+
+            <LinkButton size="sm" className="self-center" onPress={() => router.push('/privacy')}>
+              <LinkButton.Label>How Bakeio handles your data</LinkButton.Label>
+            </LinkButton>
           </View>
         ) : (
           <View className="gap-5">
