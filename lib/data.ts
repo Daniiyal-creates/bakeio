@@ -7,6 +7,14 @@ import {
 
 import { backend } from '@/lib/backend';
 import { useAuth } from '@/lib/auth';
+import {
+  SAMPLE_CONVERSATIONS,
+  SAMPLE_FAQS,
+  SAMPLE_POLICIES,
+  SAMPLE_PRODUCTS,
+  SAMPLE_PROFILE,
+  SAMPLE_ZONES,
+} from '@/lib/sampleBakery';
 import type {
   AgentReplyResult,
   AgentSettings,
@@ -659,6 +667,176 @@ export function useDeleteAccount() {
       // cleared — a server sign-out would be rejected.
       await backend.auth.signOut({ scope: 'local' });
       queryClient.clear();
+    },
+  });
+}
+
+/* -------------------------------------------------------------------------- */
+/* Sample bakery                                                              */
+/* -------------------------------------------------------------------------- */
+
+export type SampleLoadResult = {
+  products: number;
+  policies: number;
+  faqs: number;
+  zones: number;
+  conversations: number;
+  filledProfile: boolean;
+};
+
+/** True when the bakery has no rows in that table yet. */
+async function isSectionEmpty(
+  table: Table | 'conversations',
+  bakeryId: string,
+  onlyRealChats = false,
+): Promise<boolean> {
+  let query = backend.from(table).select('id').eq('bakery_id', bakeryId).limit(1);
+  if (onlyRealChats) query = query.eq('is_test', false);
+
+  const result = await query;
+  if (result.error) throw new Error(result.error.message);
+  return (result.data ?? []).length === 0;
+}
+
+function minutesAgo(minutes: number): string {
+  return new Date(Date.now() - minutes * 60_000).toISOString();
+}
+
+/**
+ * Fills an empty account with a small example bakery. Only sections that are
+ * still empty are touched, and blank bakery details are filled in — nothing the
+ * owner has already typed is overwritten.
+ */
+export function useLoadSampleBakery() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const bakery = useBakery().data;
+
+  return useMutation({
+    mutationFn: async (): Promise<SampleLoadResult> => {
+      if (!bakery) throw new Error('Add your bakery details first, then load the sample.');
+      const bakeryId = bakery.id;
+
+      const result: SampleLoadResult = {
+        products: 0,
+        policies: 0,
+        faqs: 0,
+        zones: 0,
+        conversations: 0,
+        filledProfile: false,
+      };
+
+      if (await isSectionEmpty('products', bakeryId)) {
+        const insert = await backend.from('products').insert(
+          SAMPLE_PRODUCTS.map((product, index) => ({
+            ...product,
+            bakery_id: bakeryId,
+            sort_order: index,
+          })),
+        );
+        if (insert.error) throw new Error(insert.error.message);
+        result.products = SAMPLE_PRODUCTS.length;
+      }
+
+      if (await isSectionEmpty('policies', bakeryId)) {
+        const insert = await backend.from('policies').insert(
+          SAMPLE_POLICIES.map((policy, index) => ({
+            ...policy,
+            bakery_id: bakeryId,
+            sort_order: index,
+          })),
+        );
+        if (insert.error) throw new Error(insert.error.message);
+        result.policies = SAMPLE_POLICIES.length;
+      }
+
+      if (await isSectionEmpty('faqs', bakeryId)) {
+        const insert = await backend
+          .from('faqs')
+          .insert(
+            SAMPLE_FAQS.map((faq, index) => ({ ...faq, bakery_id: bakeryId, sort_order: index })),
+          );
+        if (insert.error) throw new Error(insert.error.message);
+        result.faqs = SAMPLE_FAQS.length;
+      }
+
+      if (await isSectionEmpty('delivery_zones', bakeryId)) {
+        const insert = await backend.from('delivery_zones').insert(
+          SAMPLE_ZONES.map((zone, index) => ({
+            ...zone,
+            bakery_id: bakeryId,
+            sort_order: index,
+          })),
+        );
+        if (insert.error) throw new Error(insert.error.message);
+        result.zones = SAMPLE_ZONES.length;
+      }
+
+      if (await isSectionEmpty('conversations', bakeryId, true)) {
+        for (const sample of SAMPLE_CONVERSATIONS) {
+          const last = sample.messages[sample.messages.length - 1];
+
+          const created = await backend
+            .from('conversations')
+            .insert({
+              bakery_id: bakeryId,
+              customer_name: sample.customer_name,
+              customer_phone: sample.customer_phone,
+              status: sample.status,
+              ai_paused: sample.ai_paused ?? false,
+              is_test: false,
+              unread_count: sample.unread_count ?? 0,
+              last_message_preview: last.body.slice(0, 160),
+              last_message_at: minutesAgo(last.minutesAgo),
+            })
+            .select<'id', { id: string }>('id')
+            .single();
+          if (created.error) throw new Error(created.error.message);
+
+          const messages = await backend.from('messages').insert(
+            sample.messages.map((message) => ({
+              conversation_id: created.data.id,
+              role: message.role,
+              body: message.body,
+              handoff: message.handoff ?? false,
+              model: message.role === 'agent' ? 'sample' : null,
+              created_at: minutesAgo(message.minutesAgo),
+            })),
+          );
+          if (messages.error) throw new Error(messages.error.message);
+
+          result.conversations += 1;
+        }
+      }
+
+      const hasHours = Object.values(bakery.opening_hours ?? {}).some(Boolean);
+      const profilePatch: Partial<Bakery> = {};
+      if (!bakery.tagline) profilePatch.tagline = SAMPLE_PROFILE.tagline;
+      if (!bakery.about) profilePatch.about = SAMPLE_PROFILE.about;
+      if (!bakery.address) profilePatch.address = SAMPLE_PROFILE.address;
+      if (!bakery.city) profilePatch.city = SAMPLE_PROFILE.city;
+      if (!bakery.order_lead_time) profilePatch.order_lead_time = SAMPLE_PROFILE.order_lead_time;
+      if (!hasHours) profilePatch.opening_hours = SAMPLE_PROFILE.opening_hours;
+
+      if (Object.keys(profilePatch).length > 0) {
+        const update = await backend
+          .from('bakeries')
+          .update({ ...profilePatch, updated_at: new Date().toISOString() })
+          .eq('id', bakeryId);
+        if (update.error) throw new Error(update.error.message);
+        result.filledProfile = true;
+      }
+
+      return result;
+    },
+    onSuccess: () => {
+      const bakeryId = bakery?.id;
+      void queryClient.invalidateQueries({ queryKey: keys.bakery(user?.id) });
+      void queryClient.invalidateQueries({ queryKey: keys.products(bakeryId) });
+      void queryClient.invalidateQueries({ queryKey: keys.policies(bakeryId) });
+      void queryClient.invalidateQueries({ queryKey: keys.faqs(bakeryId) });
+      void queryClient.invalidateQueries({ queryKey: keys.zones(bakeryId) });
+      void queryClient.invalidateQueries({ queryKey: keys.conversations(bakeryId) });
     },
   });
 }

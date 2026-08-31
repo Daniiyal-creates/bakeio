@@ -1,17 +1,50 @@
+import { useState } from 'react';
 import { View } from 'react-native';
 import { router } from 'expo-router';
-import { BookOpen, Croissant, HelpCircle, ScrollText, Store, Truck } from 'lucide-react-native';
-import { Chip, Separator, Typography, useThemeColor } from 'heroui-native';
+import {
+  BookOpen,
+  Croissant,
+  HelpCircle,
+  ScrollText,
+  Sparkles,
+  Store,
+  Truck,
+} from 'lucide-react-native';
+import { Button, Chip, Separator, Spinner, Typography, useThemeColor } from 'heroui-native';
 
 import { ScreenScroll } from '@/components/Screen';
 import { SectionCard } from '@/components/SectionCard';
 import { ListRow } from '@/components/ListRow';
-import { useBakery, useKnowledgeSummary } from '@/lib/data';
+import { ErrorNote } from '@/components/ConfirmDialog';
+import { friendlyError } from '@/lib/backend';
+import {
+  useBakery,
+  useKnowledgeSummary,
+  useLoadSampleBakery,
+  type SampleLoadResult,
+} from '@/lib/data';
+
+/** Plain-language summary of what the sample loader just added. */
+function describeSample(result: SampleLoadResult): string {
+  const parts: string[] = [];
+  if (result.products > 0) parts.push(`${result.products} products`);
+  if (result.policies > 0) parts.push(`${result.policies} policies`);
+  if (result.faqs > 0) parts.push(`${result.faqs} FAQs`);
+  if (result.zones > 0) parts.push(`${result.zones} delivery areas`);
+  if (result.conversations > 0) parts.push(`${result.conversations} example chats`);
+  if (result.filledProfile) parts.push('your opening hours and address');
+
+  if (parts.length === 0) return 'Everything was already filled in, so nothing changed.';
+  if (parts.length === 1) return `Added ${parts[0]}.`;
+  return `Added ${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}.`;
+}
 
 export default function KnowledgeScreen() {
   const [foreground, accent] = useThemeColor(['foreground', 'accent']);
   const { data: bakery } = useBakery();
   const summary = useKnowledgeSummary();
+  const loadSample = useLoadSampleBakery();
+  const [sampleNote, setSampleNote] = useState<string | null>(null);
 
   const sections = [
     {
@@ -107,6 +140,36 @@ export default function KnowledgeScreen() {
           }
         />
       </SectionCard>
+
+      {summary.filledSections < 4 ? (
+        <SectionCard
+          title="Not sure where to start?"
+          subtitle="Load an example bakery — products with prices and allergens, policies, FAQs, delivery areas and two customer chats. Only the empty sections are filled, and you can edit or delete anything afterwards."
+        >
+          {loadSample.isError ? <ErrorNote message={friendlyError(loadSample.error)} /> : null}
+          {sampleNote ? (
+            <Typography type="body-sm" className="text-accent">
+              {sampleNote}
+            </Typography>
+          ) : null}
+          <Button
+            variant="secondary"
+            className="self-start"
+            isDisabled={loadSample.isPending || !bakery}
+            onPress={() => {
+              setSampleNote(null);
+              loadSample.mutate(undefined, {
+                onSuccess: (result) => setSampleNote(describeSample(result)),
+              });
+            }}
+          >
+            {loadSample.isPending ? <Spinner size="sm" /> : <Sparkles size={16} color={accent} />}
+            <Button.Label>
+              {loadSample.isPending ? 'Adding…' : 'Add example bakery content'}
+            </Button.Label>
+          </Button>
+        </SectionCard>
+      ) : null}
     </ScreenScroll>
   );
 }
